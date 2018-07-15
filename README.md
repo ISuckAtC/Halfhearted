@@ -15,6 +15,7 @@ Overall commands
  - back (this command is usable in most areas of the application and will take you to the previous menu, if you want to exit just use this command until you reach the Start menu)
 
 [Start]
+
 Here you will get a prompt to either create or select a character. In this current build the first character slot will always be taken by a Test character with the character class "Warrior". Each time you create a character it will be assigned an ID which goes from 0-99, you can thus make up to 100 characters (in this build). Creating a character will let you pick a name and character class and will then save that character in memory. 
 
 Commands
@@ -23,6 +24,7 @@ Commands
  
  
  [Character Menu]
+ 
  Here you can interact with your character through different commands.
  
  Commands
@@ -35,6 +37,7 @@ Commands
   
   
  [Inventory Select]
+ 
  Here you can either select an inventory slot or an equip slot (currently the only equip slot is the "Weapon" slot.
  
  Commands
@@ -44,6 +47,7 @@ Commands
   - Weapon (This will take you to the weapon slot)
   
  [Inventory Slot]
+ 
  Here you can add an item to a slot, equip the item to an equip slot (the only equip slot is the weapon slot currently) and display info about an item in that specific slot.
  
  Commands
@@ -55,6 +59,7 @@ Commands
   - Equip (Equips the item in the selected inventory slot to your Weapon slot)
   
  [Weapon Slot]
+ 
  Here you can display info about the item currently equipped and unequip the equipped item
  
  Commands
