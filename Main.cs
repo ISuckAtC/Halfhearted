@@ -48,9 +48,17 @@ namespace CSharp_Shell
         private int health;
         private int skill;
         private int xp;
+        private int level;
         private int damage;
+        private int maxLevel;
+        private int maxInv;
         
-        private int[] inventory = new int[9];
+        private int startXp;
+        private double XpX;
+        
+        private int[] levelXp;
+        
+        private int[] inventory;
         
         public int weaponSlot;
         
@@ -60,39 +68,52 @@ namespace CSharp_Shell
         {
             playerName = pName;
             playerClass = pClass;
+            xp = 0;
+            level = 1;
+            startXp = 100;
+            XpX = 1.5;
+            maxLevel = 20;
+            maxInv = 10;
+            
+            levelXp = new int[maxLevel];
+            inventory = new int[maxInv];
+            
+            levelXp[0] = startXp;
+            
             
             switch(playerClass)
             {
                 case "Knight":
                 health = 200;
                 skill = 8;
-                xp = 0;
                 break;
                 
                 case "Warrior":
                 health = 150;
                 skill = 10;
-                xp = 0;
                 break;
                 
                 case "Thief":
                 health = 100;
                 skill = 13;
-                xp = 0;
                 break;
                 
                 case "Kieran":
                 health = 30;
                 skill = -5;
-                xp = 50;
                 break;
                 
                 default:
                 health = 140;
                 skill = 10;
-                xp = 0;
                 break;
             }
+            
+            for (int x = level; x < maxLevel; x++)
+            {
+                levelXp[x] = Convert.ToInt32(levelXp[x-1] * XpX);
+            }
+            
             updateStats();
         }
         private void updateStats()
@@ -104,18 +125,56 @@ namespace CSharp_Shell
                 damage += Program.returnItem(weaponSlot).itemDamage;
             }
         }
+        public void listLevelXp()
+        {
+            string read = Console.ReadLine();
+            bool total;
+            int tempXp;
+            
+            switch(read)
+            {
+                case "total":
+                total = true;
+                break;
+                
+                case "diff":
+                total = false;
+                break;
+                
+                default:
+                total = true;
+                break;
+            }
+            int tempLevel = 1;
+            for(int x = 1; x < maxLevel; x++)
+            {
+                if (total == true)
+                {
+                    tempXp = levelXp[x];
+                } else tempXp = levelXp[x] - levelXp[x-1];
+                Console.WriteLine("[Level]: {0} || [XP to Level {1}]: {2}",tempLevel,tempLevel + 1,tempXp);
+                tempLevel++;
+            }
+        }
         public string getName()
         {
-            return playerName;
+            if (Program.dev == true)
+            {
+                return playerName;
+            } else return "";
         }
         public string getClass()
         {
-            return playerClass;
+            if (Program.dev == true)
+            {
+                return playerClass;
+            } else return "";
         }
         public void getStats()
         {
             Console.WriteLine("[Name]: {0}",playerName);
             Console.WriteLine("[Class]: {0}",playerClass);
+            Console.WriteLine("[Level]: {0}",level);
             Console.WriteLine("[Health]: {0}",health);
             Console.WriteLine("[Skill]: {0}",skill);
             Console.WriteLine("[Experience]: {0}",xp);
@@ -166,6 +225,7 @@ namespace CSharp_Shell
         static int invID;
         static string read;
         static int tempID;
+        public static bool dev = true;
         
         
         public static void createPlayer()
@@ -181,7 +241,9 @@ namespace CSharp_Shell
         public static void populateItems()
         {
             itemID[1] = new Item(name: "Iron Sword", damage: 10, equipable: true);
-            itemID[2] = new Item(name: "Lesser Health Potion",healing: 5,consumable: true);
+            itemID[2] = new Item(name: "Lesser Health Potion", healing: 5, consumable: true);
+            itemID[3] = new Item(name: "Dark Totem");
+            itemID[4] = new Item(name: "Flesh Blade", damage: 3, healing: 2, equipable: true, consumable: true);
         }
         
         public static Item returnItem(int ID)
@@ -201,6 +263,15 @@ namespace CSharp_Shell
                 read = Console.ReadLine();
                 switch(read)
                 {
+                    case "DEVMODE":
+                    string devCheck = Console.ReadLine();
+                    if (devCheck == "No Nut Kieran 170394")
+                    {
+                        dev = true;
+                        Console.WriteLine("DEVMODE ACTIVATED");
+                    }
+                    break;
+                    
                     case "Create":
                     createPlayer();
                     break;
@@ -216,6 +287,10 @@ namespace CSharp_Shell
                         read = Console.ReadLine();
                         switch(read)
                         {
+                            case "listLevelXp":
+                            profiles[profileID].listLevelXp();
+                            break;
+                            
                             case "getName":
                             string getName = profiles[profileID].getName();
                             Console.WriteLine(getName);
@@ -231,13 +306,17 @@ namespace CSharp_Shell
                             break;
                             
                             case "modCash":
-                            Console.WriteLine("How much money do you want to add/remove?");
-                            int amount;
-                            if(int.TryParse(Console.ReadLine(),out amount))
+                            if (dev == true)
                             {
-                                profiles[profileID].modCash(amount);
-                                break;
-                            } else break;
+                                Console.WriteLine("How much money do you want to add/remove?");
+                                int amount;
+                                if(int.TryParse(Console.ReadLine(),out amount))
+                                {
+                                    profiles[profileID].modCash(amount);
+                                    break;
+                                } else {break;}
+                            }
+                            break;
                             
                             case "Inventory":
                             for(;;)
