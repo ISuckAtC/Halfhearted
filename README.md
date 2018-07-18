@@ -9,6 +9,31 @@ If you type in an invalid command the application will simply prompt you to type
 
 -- [MENU MAP] --
 
+This is a compressed and basic menu map, commands are explained in detail further below. [INT] means you have to input an integer, and dev commands will have a (!) behind them.
+
+- Main
+
+  - Create
+  - [INT]
+    - Inventory
+      - [INT]
+        - Add (!)
+        - Info
+        - Equip
+      - Weapon
+        - Info
+        - Unequip
+    - getStats
+    - getName (!)
+    - getClass (!)
+    - modCash (!)
+    - listLevelXp (!)
+      - total
+      - diff
+  - DEVMODE
+    - Password
+
+
 Overall commands
 
  - exit (this command is only usable on the Start menu and will exit the application
@@ -34,6 +59,7 @@ Commands
   - getClass (Returns the character class of your character)
   - getStats (Lists the stats of your character, including name and class)
   - modCash (Add or remove gold from the character, single integer input, so use minus to remove)
+  - listLevelXp (Dev command which lets you see how much XP is needed for different levels)
   
   
  [Inventory Select]
@@ -52,7 +78,7 @@ Commands
  
  Commands
  
-  - Add (Adds an item to the selected inventory slot (Item IDs range from integers 0 to 99, item ID 0 is an empty slot, and the only items added in this build have the IDs [1] and [2].
+  - Add (Adds an item to the selected inventory slot (Item IDs range from integers 0 to 99, item ID 0 is an empty slot, and the only items added in this build have the IDs [1] to [4].
   
   - Info (Displays info about the item in the selected inventory slot)
   
