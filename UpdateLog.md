@@ -1,6 +1,30 @@
+Update 0.0.3
+
+ - Fixes 1 crash and 1 bug, opimized some code
+ 
+ - Added character death
+ 
+   - If a character dies, you won't be able to access that character anymore.
+   
+ - Added healing
+ 
+   - "Consume" is now an option in the inventory slot menu
+   
+ - Added support for using items multiple times
+ 
+   - Items can now have multiple uses
+   
+   - Added new item (ID: 5), this item has 4 uses and is a new healing item.
+
+
+
+Update 0.0.2
+
 - Added Levels
   
   - Each level requires more XP to reach than the last. 
+  
+  - XP gain and levelup is WIP.
 
 - Updated the creation of the inventory, improving the code for future updates
 
