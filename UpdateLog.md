@@ -1,3 +1,26 @@
+Update 0.0.4
+ 
+ - COMBAT WOOOOO
+   
+   - In the character screen, use the command "Fight" to engage in batte with a monster
+   
+   - Decide the difficulty of the monster by defining the grade when promted, grade 1 will get one-shot by most characters while a grade might kill you
+   
+   - You can access your inventory during combat, but you can only comsume 1 item, this will end your turn
+   
+   
+ - Character overhaul
+ 
+   - I realised there is a much better way of storing characters, you can now have infinite
+   
+   - After a character dies it gets deleted instead of becoming inaccessable
+   
+   - You now select your character by using "Select" in the main menu and then typing the name of your character
+   
+ - General improvements
+
+
+
 Update 0.0.3
 
  - Fixes 1 crash and 1 bug, opimized some code
