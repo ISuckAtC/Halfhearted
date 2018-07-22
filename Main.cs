@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace CSharp_Shell
+namespace HalfHearted
 {
     public class ExtraFunctions
     {
@@ -16,6 +16,63 @@ namespace CSharp_Shell
             return value;
         }
     }
+
+    public abstract class Entity
+    {
+        public int health;
+        public int speed;
+        public int damage;
+
+        public string Name;
+
+        public bool isAlive;
+
+        public abstract void Update();
+
+        public void TakeDamage(int amount)
+        {
+            health -= amount;
+            Console.WriteLine("{0} took {1} damage!", Name, amount);
+            if (health < 1)
+            {
+                isAlive = false;
+            }
+            Update();
+        }
+    }
+
+    public class Monster : Entity
+    {
+        private int XP;
+
+        public Monster(string mName, int mHealth, int mSpeed = 0, int mDamage = 0, int mXp = 0)
+        {
+            isAlive = true;
+            Name = mName;
+            health = mHealth;
+            speed = mSpeed;
+            damage = mDamage;
+            XP = mXp;
+            Update();
+        }
+
+        public override void Update()
+        {
+            if (isAlive == false)
+            {
+                Console.WriteLine("{0} has slain {1}!", Program.activePlayer.Name, Name);
+                Program.activePlayer.GainXP(XP);
+            }
+        }
+
+        public void Stats()
+        {
+            Console.WriteLine("[Name]: {0}", Name);
+            Console.WriteLine("[Health]: {0}", health);
+            Console.WriteLine("[Damage]: {0}", damage);
+        }
+    }
+
     public class Item
     {
         public string itemName;
@@ -56,21 +113,16 @@ namespace CSharp_Shell
         }
     }
 
-    public class PlayerProfile
+    public class PlayerProfile : Entity
     {
-        public string playerName;
-        public string playerClass;
+        public string Class;
 
-        public int health;
-        private int skill;
+        private int strength;
         private int xp;
         private int level;
-        private int damage;
         private int maxLevel;
         public int maxInv;
         public int maxHealth;
-
-        public bool isAlive;
 
         private int startXp;
         private double XpX;
@@ -85,8 +137,8 @@ namespace CSharp_Shell
 
         public PlayerProfile(string pName, string pClass)
         {
-            playerName = pName;
-            playerClass = pClass;
+            Name = pName;
+            Class = pClass;
             xp = 0;
             level = 1;
             startXp = 100;
@@ -98,70 +150,72 @@ namespace CSharp_Shell
             levelXp = new int[maxLevel];
             inventory = new int[maxInv];
 
-            levelXp[0] = startXp;
+            levelXp[1] = startXp;
 
 
-            switch (playerClass)
+            switch (Class)
             {
                 case "Knight":
                     maxHealth = 200;
-                    skill = 8;
+                    strength = 8;
+                    speed = 5;
                     break;
 
                 case "Warrior":
                     maxHealth = 150;
-                    skill = 10;
+                    strength = 10;
+                    speed = 7;
                     break;
 
                 case "Thief":
                     maxHealth = 100;
-                    skill = 13;
+                    strength = 13;
+                    speed = 11;
                     break;
 
                 case "Kieran":
                     maxHealth = 30;
-                    skill = -5;
+                    strength = -5;
+                    speed = 0;
                     break;
 
                 default:
                     maxHealth = 140;
-                    skill = 10;
+                    strength = 10;
+                    speed = 5;
                     break;
             }
 
-            for (int x = level; x < maxLevel; x++)
+            for (int x = level; x < maxLevel - 1; x++)
             {
-                levelXp[x] = Convert.ToInt32(levelXp[x - 1] * XpX);
+                levelXp[x + 1] = Convert.ToInt32(levelXp[x] * XpX);
             }
 
             health = maxHealth;
 
-            UpdateStats();
+            Update();
         }
-        private void UpdateStats()
+
+        public override void Update()
         {
             if (isAlive == false)
             {
                 Console.WriteLine("Oh dear, you are dead!");
             }
-            damage = skill / 2;
+            damage = strength / 2;
 
             if (weaponSlot != 0)
             {
                 damage += Program.items[weaponSlot].itemDamage;
             }
-        }
-        public void TakeDamage(int amount)
-        {
-            health -= amount;
-            Console.WriteLine("{0} took {1} damage!", playerName, amount);
-            if (health < 1)
+
+            if (xp >= levelXp[level] && level < maxLevel)
             {
-                isAlive = false;
+                LevelUp();
             }
-            UpdateStats();
         }
-        public void Consume(Item consumable)
+
+        public bool Consume(Item consumable)
         {
             if (consumable.itemHealing > 0)
             {
@@ -169,15 +223,22 @@ namespace CSharp_Shell
                 {
                     int trueHeal = ExtraFunctions.Clamp(consumable.itemHealing, 0, maxHealth - health);
                     health += trueHeal;
-                    Console.WriteLine("{0} was healed for {1}", playerName, trueHeal);
-                    Console.WriteLine("{0} now has {1} health", playerName, health);
+                    Console.WriteLine("{0} was healed for {1}", Name, trueHeal);
+                    Console.WriteLine("{0} now has {1} health", Name, health);
                     consumable.itemStack--;
                     if (consumable.itemStack == 0)
                     {
                         SetItem(Program.invID, 0);
                     }
-                } else { Console.WriteLine("{0} already has full health!",playerName); }
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("{0} already has full health!", Name);
+                    return false;
+                }
             }
+            return false;
         }
         public void ListLevelXp()
         {
@@ -213,11 +274,11 @@ namespace CSharp_Shell
         }
         public void Stats()
         {
-            Console.WriteLine("[Name]: {0}", playerName);
-            Console.WriteLine("[Class]: {0}", playerClass);
+            Console.WriteLine("[Name]: {0}", Name);
+            Console.WriteLine("[Class]: {0}", Class);
             Console.WriteLine("[Level]: {0}", level);
             Console.WriteLine("[Health]: {0}", health);
-            Console.WriteLine("[Skill]: {0}", skill);
+            Console.WriteLine("[Strength]: {0}", strength);
             Console.WriteLine("[Experience]: {0}", xp);
             Console.WriteLine("[Money]: {0} gold", cash);
         }
@@ -232,7 +293,7 @@ namespace CSharp_Shell
                 jokker = "from";
                 amount = -amount;
             }
-            Console.WriteLine("You {0} {1} gold {2} {3}", joker, amount, jokker, playerName);
+            Console.WriteLine("You {0} {1} gold {2} {3}", joker, amount, jokker, Name);
         }
         public void SetItem(int invID, int itemID)
         {
@@ -259,20 +320,65 @@ namespace CSharp_Shell
             }
             return temp;
         }
+        public void GainXP(int amount)
+        {
+            xp += amount;
+            Console.WriteLine("{0} gained {1} experience", Name, amount);
+        }
+        private void LevelUp()
+        {
+            level++;
+            Console.WriteLine("LEVEL UP");
+            Console.WriteLine("Congratulations, you are now level {0}", level);
+            Console.WriteLine();
+            Console.WriteLine("Choose a stat to level up");
+            Console.WriteLine("Health | Strength | Speed");
+            for (; ; )
+            {
+                bool end = false;
+                string statAnswer = Console.ReadLine();
+                switch (statAnswer)
+                {
+                    case "Health":
+                        maxHealth += 10;
+                        Console.WriteLine("Your health has been increased by 10 [{0}]", health);
+                        end = true;
+                        break;
+
+                    case "Strength":
+                        strength++;
+                        Console.WriteLine("Your strength has been increased by 1 [{0}]", strength);
+                        end = true;
+                        break;
+
+                    case "Speed":
+                        speed++;
+                        Console.WriteLine("Your speed has been increased by 1 [{0}]", speed);
+                        end = true;
+                        break;
+
+                    default:
+                        break;
+                }
+                if (end) { break; }
+            }
+            health = maxHealth;
+        }
     }
 
     public class Program
     {
 
-        static public PlayerProfile[] profiles = new PlayerProfile[99];
+        static public List<PlayerProfile> profiles = new List<PlayerProfile>();
         static public Item[] items = new Item[99];
         static int playerCount = 0;
-        static int profileID;
         static public int invID;
         static string read;
         static int tempID;
         public static bool dev = true;
         static public PlayerProfile activePlayer;
+        static public Random random = new Random();
+        static public bool endTurn;
 
         private const string I = "Info";
 
@@ -283,8 +389,325 @@ namespace CSharp_Shell
             string pName = Console.ReadLine();
             Console.WriteLine("What is your player class?");
             string pClass = Console.ReadLine();
-            profiles[playerCount] = new PlayerProfile(pName, pClass);
-            playerCount++;
+            if (profiles.Exists(x => x.Name == pName) == false)
+            {
+                profiles.Add(new PlayerProfile(pName, pClass));
+                playerCount++;
+            } else { Console.WriteLine("A character with that name already exists"); }
+        }
+
+        public static void Battle(Monster monster)
+        {
+            Console.WriteLine("You encounter a {0}!", monster.Name);
+            Console.WriteLine("Battle Start!");
+            for (; ; )
+            {
+                for (; ; )
+                {
+                    endTurn = false;
+                    Console.WriteLine("What do you wish to do?");
+                    read = Console.ReadLine();
+                    switch (read)
+                    {
+                        case "Attack":
+                            int realDamage;
+
+                            realDamage = activePlayer.damage;
+
+                            Console.WriteLine("{0} attacks {1}!", activePlayer.Name, monster.Name, realDamage);
+                            monster.TakeDamage(realDamage);
+                            if (activePlayer.speed > monster.speed * 2 && monster.isAlive)
+                            {
+                                Console.WriteLine("Surperior speed allows {0} to attack again!", activePlayer.Name, realDamage);
+                                monster.TakeDamage(realDamage);
+                            }
+                            endTurn = true;
+                            break;
+
+                        case "Inventory":
+                            Inventory(activePlayer, true);
+                            break;
+
+                        case I:
+                            if (dev)
+                            {
+                                monster.Stats();
+                                break;
+                            } else { break; }
+
+                        default:
+                            Console.WriteLine("Invalid choice");
+                            break;
+                    }
+                    if (endTurn) { break; }
+                }
+                if (monster.isAlive)
+                {
+                    int monsterDamage;
+
+                    monsterDamage = monster.damage;
+                    Console.WriteLine("{0} attacks {1}!", monster.Name, activePlayer.Name, monsterDamage);
+                    activePlayer.TakeDamage(monsterDamage);
+                    if (monster.speed > activePlayer.speed * 2 && monster.isAlive)
+                    {
+                        Console.WriteLine("Surperior speed allows {0} to attack again!", monster.Name, monsterDamage);
+                        activePlayer.TakeDamage(monsterDamage);
+                    }
+                }
+                if (activePlayer.isAlive) { activePlayer.Update(); }
+                if (monster.isAlive == false || activePlayer.isAlive == false) { break; }
+            }
+        }
+
+        public static void Inventory(PlayerProfile player, bool isBattle)
+        {
+            bool hasConsumed = false;
+            string name = player.Name;
+            Console.WriteLine("[Inventory of {0}]", name);
+            Console.WriteLine("Select an inventory or equipment slot");
+            for (; ; )
+            {
+                read = Console.ReadLine();
+                if (int.TryParse(read, out invID))
+                {
+                    Console.WriteLine("Selected inventory slot [{0}]", invID);
+                    for (; ; )
+                    {
+                        if (invID > (player.maxInv - 1) || invID < 0)
+                        {
+                            Console.WriteLine("That is not a valid inventory slot");
+                            break;
+                        }
+                        else { tempID = player.ItemInfo(invID); }
+                        read = Console.ReadLine();
+                        switch (read)
+                        {
+                            case "Consume":
+                                if (isBattle == false || hasConsumed == false)
+                                {
+                                    if (tempID != 0)
+                                    {
+                                        if (items[tempID].isConsumable)
+                                        {
+                                            hasConsumed = player.Consume(items[tempID]);
+                                        }
+                                        else
+                                        { Console.WriteLine("This is not a consumable item"); }
+                                    }
+                                    else { Console.WriteLine("There is no item to consume"); }
+                                } else { Console.WriteLine("You have already consumed an item this turn!"); }
+                                break;
+
+
+                            case "Add":
+                                for (; ; )
+                                {
+                                    Console.WriteLine("Enter item ID");
+                                    read = Console.ReadLine();
+                                    if (int.TryParse(read, out tempID))
+                                    {
+                                        player.SetItem(invID, tempID);
+                                        break;
+                                    }
+                                }
+                                break;
+
+                            case I:
+                                if (tempID != 0)
+                                {
+                                    items[tempID].infoDump();
+                                }
+                                else { Console.WriteLine("There is no item to view"); }
+                                break;
+
+                            case "Equip":
+                                if (tempID != 0)
+                                {
+                                    if (items[tempID].isEquipable == true)
+                                    {
+                                        player.weaponSlot = tempID;
+                                        player.SetItem(invID, 0);
+                                        activePlayer.Update();
+                                    }
+                                    else { Console.WriteLine("You can't equip that item!"); }
+                                }
+                                else { Console.WriteLine("There is no item to equip"); }
+                                break;
+
+                            default: break;
+                        }
+                        if (hasConsumed) { break; }
+                        if (read == "back")
+                        {
+                            read = "lul";
+                            Console.WriteLine("[Inventory of {0}]", name);
+                            Console.WriteLine("Select an inventory or equipment slot");
+                            break;
+                        }
+                    }
+
+                }
+                switch (read)
+                {
+                    case "Weapon":
+                        Console.WriteLine("Weapon Slot");
+                        for (; ; )
+                        {
+                            tempID = player.weaponSlot;
+                            read = Console.ReadLine();
+                            switch (read)
+                            {
+                                case I:
+                                    if (tempID != 0)
+                                    {
+                                        items[tempID].infoDump();
+                                    }
+                                    else { Console.WriteLine("There is nothing equipped in this slot"); }
+                                    break;
+
+                                case "Unequip":
+                                    if (tempID != 0)
+                                    {
+                                        if (player.FindEmpty() == -1)
+                                        {
+                                            Console.WriteLine("No empty inventory slots available");
+                                            break;
+                                        }
+                                        player.SetItem(player.FindEmpty(), tempID);
+                                        player.weaponSlot = 0;
+                                    }
+                                    else { Console.WriteLine("There is nothing equipped in this slot"); }
+                                    break;
+
+                                default: break;
+                            }
+                            if (read == "back")
+                            {
+                                read = "lul";
+                                Console.WriteLine("[Inventory of {0}]", name);
+                                Console.WriteLine("Select an inventory or equipment slot");
+                                break;
+                            }
+                        }
+                        break;
+
+                    default: break;
+                }
+                if (hasConsumed)
+                {
+                    endTurn = true;
+                    break;
+                }
+                if (read == "back")
+                {
+                    read = "lul";
+                    if (isBattle == false)
+                    {
+                        Console.WriteLine("Selected profile: [{0}]", player.Name);
+                    }
+                    break;
+                }
+            }
+        }
+
+        public static void ProfileSelected(PlayerProfile player)
+        {
+            activePlayer = player;
+            Console.WriteLine("Selected profile: [{0}]", activePlayer.Name);
+            for (; ; )
+            {
+                read = Console.ReadLine();
+                switch (read)
+                {
+                    case "Fight":
+                        Monster monster;
+                        Console.WriteLine("What grade monster do you wish to fight?");
+                        for (; ; )
+                        {
+                            read = Console.ReadLine();
+                            int grade;
+                            if (int.TryParse(read, out grade))
+                            {
+                                monster = generateMonster(grade);
+                                break;
+                            }
+                            else { Console.WriteLine("Thats not a valid integer!"); }
+                        }
+
+                        Battle(monster);
+                        break;
+
+                    case "TakeDamage":
+                        for (; ; )
+                        {
+                            Console.WriteLine("How much damage do you wish to take?");
+                            read = Console.ReadLine();
+                            int amount;
+                            if (int.TryParse(read, out amount))
+                            {
+                                if (amount >= 0)
+                                {
+                                    activePlayer.TakeDamage(amount);
+                                    break;
+                                }
+                                else { Console.WriteLine("You can't take negative damage!"); }
+                            }
+                            else { Console.WriteLine("That is not a valid integer!"); }
+                        }
+                        break;
+
+                    case "ListLevelXp":
+                        activePlayer.ListLevelXp();
+                        break;
+
+                    case "Name":
+                        string getName = activePlayer.Name;
+                        Console.WriteLine(getName);
+                        break;
+
+                    case "Class":
+                        string getClass = activePlayer.Class;
+                        Console.WriteLine(getClass);
+                        break;
+
+                    case I:
+                        activePlayer.Stats();
+                        break;
+
+                    case "ModCash":
+                        if (dev)
+                        {
+                            Console.WriteLine("How much money do you want to add/remove?");
+                            int amount;
+                            if (int.TryParse(Console.ReadLine(), out amount))
+                            {
+                                activePlayer.ModCash(amount);
+                                break;
+                            }
+                            else { break; }
+                        }
+                        break;
+
+                    case "Inventory":
+                        Inventory(activePlayer, false);
+                        break;
+
+                    default:
+                        break;
+                }
+                if (read == "back")
+                {
+                    read = "lul";
+                    Console.WriteLine("Create or select profile");
+                    break;
+                }
+                if (activePlayer.isAlive == false)
+                {
+                    Console.WriteLine("Create or select profile");
+                    profiles.Remove(profiles.Find(x => x.Name == activePlayer.Name));
+                    break;
+                }
+            }
         }
 
         public static void PopulateItems()
@@ -294,15 +717,27 @@ namespace CSharp_Shell
             items[3] = new Item(name: "Dark Totem");
             items[4] = new Item(name: "Flesh Blade", damage: 3, healing: 2, equipable: true, consumable: true);
             items[5] = new Item(name: "Saradomin Brew", healing: 16, consumable: true, stack: 4);
+            items[6] = new Item(name: "2B2T", damage: 100, equipable: true);
+        }
+
+        public static Monster generateMonster(int grade = 1, string name = "Plant")
+        {
+            Monster monster = new Monster(
+                name, 
+                random.Next(grade, grade * 3) * 10,
+                random.Next(grade, grade * 2),
+                random.Next(grade, grade * 3),
+                random.Next(grade * 2, grade * 5) * 5);
+            return monster;
         }
 
         public static void Main()
         {
-            profiles[playerCount] = new PlayerProfile("Test", "Warrior");
+            profiles.Add(new PlayerProfile("Test", "Warrior"));
             playerCount++;
             PopulateItems();
 
-            Console.WriteLine("Create or select profile");
+            Console.WriteLine("Select or create character");
             for (; ; )
             {
                 read = Console.ReadLine();
@@ -321,222 +756,18 @@ namespace CSharp_Shell
                         CreatePlayer();
                         break;
 
+                    case "Select":
+                        Console.WriteLine("What character do you wish to select?");
+                        string select = Console.ReadLine();
+                        if(profiles.Exists(x => x.Name == select))
+                        {
+                            PlayerProfile tempPlayer = profiles.Find(x => x.Name == select);
+                            ProfileSelected(tempPlayer);
+                        } else { Console.WriteLine("That character does not exist"); }
+                        break;
+
                     default:
                         break;
-                }
-                if (int.TryParse(read, out profileID))
-                {
-                    activePlayer = profiles[profileID];
-                    if (activePlayer.isAlive == false)
-                    {
-                        Console.WriteLine("This character is dead");
-                        continue;
-                    }
-                    Console.WriteLine("Selected profile: [{0}] (ID: {1})", activePlayer.playerName, profileID);
-                    for (; ; )
-                    {
-                        read = Console.ReadLine();
-                        switch (read)
-                        {
-                            case "TakeDamage":
-                                for (; ; )
-                                {
-                                    Console.WriteLine("How much damage do you wish to take?");
-                                    read = Console.ReadLine();
-                                    int amount;
-                                    if (int.TryParse(read, out amount))
-                                    {
-                                        if (amount >= 0)
-                                        {
-                                            activePlayer.TakeDamage(amount);
-                                            break;
-                                        } else { Console.WriteLine("You can't take negative damage!"); }
-                                    } else { Console.WriteLine("That is not a valid integer!"); }
-                                }
-                                break;
-
-                            case "ListLevelXp":
-                                activePlayer.ListLevelXp();
-                                break;
-
-                            case "Name":
-                                string getName = activePlayer.playerName;
-                                Console.WriteLine(getName);
-                                break;
-
-                            case "Class":
-                                string getClass = activePlayer.playerClass;
-                                Console.WriteLine(getClass);
-                                break;
-
-                            case I:
-                                activePlayer.Stats();
-                                break;
-
-                            case "ModCash":
-                                if (dev == true)
-                                {
-                                    Console.WriteLine("How much money do you want to add/remove?");
-                                    int amount;
-                                    if (int.TryParse(Console.ReadLine(), out amount))
-                                    {
-                                        activePlayer.ModCash(amount);
-                                        break;
-                                    }
-                                    else { break; }
-                                }
-                                break;
-
-                            case "Inventory":
-                                string name = activePlayer.playerName;
-                                Console.WriteLine("[Inventory of {0}]", name);
-                                Console.WriteLine("Select an inventory or equipment slot");
-                                for (; ; )
-                                {
-                                    read = Console.ReadLine();
-                                    if (int.TryParse(read, out invID))
-                                    {
-                                        Console.WriteLine("Selected inventory slot [{0}]", invID);
-                                        for (; ; )
-                                        {
-                                            if (invID > (activePlayer.maxInv - 1) || invID < 0)
-                                            {
-                                                Console.WriteLine("That is not a valid inventory slot");
-                                                break;
-                                            } else {tempID = activePlayer.ItemInfo(invID);}
-                                            read = Console.ReadLine();
-                                            switch (read)
-                                            {
-                                                case "Consume":
-                                                    if (tempID != 0)
-                                                    {
-                                                        if (items[tempID].isConsumable)
-                                                        {
-                                                            activePlayer.Consume(items[tempID]);
-                                                        }
-                                                        else
-                                                        { Console.WriteLine("This is not a consumable item"); }
-                                                    }
-                                                    else { Console.WriteLine("There is no item to consume"); }
-                                                    break;
-
-
-                                                case "Add":
-                                                    for (; ; )
-                                                    {
-                                                        Console.WriteLine("Enter item ID");
-                                                        read = Console.ReadLine();
-                                                        if (int.TryParse(read, out tempID))
-                                                        {
-                                                            activePlayer.SetItem(invID, tempID);
-                                                            break;
-                                                        }
-                                                    }
-                                                    break;
-
-                                                case I:
-                                                    if (tempID != 0)
-                                                    {
-                                                        items[tempID].infoDump();
-                                                    }
-                                                    else { Console.WriteLine("There is no item to view"); }
-                                                    break;
-
-                                                case "Equip":
-                                                    if (tempID != 0)
-                                                    {
-                                                        if (items[tempID].isEquipable == true)
-                                                        {
-                                                            activePlayer.weaponSlot = tempID;
-                                                            activePlayer.SetItem(invID, 0);
-                                                        }
-                                                        else { Console.WriteLine("You can't equip that item!"); }
-                                                    }
-                                                    else { Console.WriteLine("There is no item to equip"); }
-                                                    break;
-
-                                                default: break;
-                                            }
-                                            if (read == "back")
-                                            {
-                                                read = "lul";
-                                                Console.WriteLine("[Inventory of {0}]", name);
-                                                Console.WriteLine("Select an inventory or equipment slot");
-                                                break;
-                                            }
-                                        }
-
-                                    }
-                                    switch (read)
-                                    {
-                                        case "Weapon":
-                                            Console.WriteLine("Weapon Slot");
-                                            for (; ; )
-                                            {
-                                                tempID = activePlayer.weaponSlot;
-                                                read = Console.ReadLine();
-                                                switch (read)
-                                                {
-                                                    case I:
-                                                        if (tempID != 0)
-                                                        {
-                                                            items[tempID].infoDump();
-                                                        }
-                                                        else { Console.WriteLine("There is nothing equipped in this slot"); }
-                                                        break;
-
-                                                    case "Unequip":
-                                                        if (tempID != 0)
-                                                        {
-                                                            if (activePlayer.FindEmpty() == -1)
-                                                            {
-                                                                Console.WriteLine("No empty inventory slots available");
-                                                                break;
-                                                            }
-                                                            activePlayer.SetItem(activePlayer.FindEmpty(), tempID);
-                                                            activePlayer.weaponSlot = 0;
-                                                        }
-                                                        else { Console.WriteLine("There is nothing equipped in this slot"); }
-                                                        break;
-
-                                                    default: break;
-                                                }
-                                                if (read == "back")
-                                                {
-                                                    read = "lul";
-                                                    Console.WriteLine("[Inventory of {0}]", name);
-                                                    Console.WriteLine("Select an inventory or equipment slot");
-                                                    break;
-                                                }
-                                            }
-                                            break;
-
-                                        default: break;
-                                    }
-                                    if (read == "back")
-                                    {
-                                        read = "lul";
-                                        Console.WriteLine("Selected profile: [{0}] (ID: {1})", activePlayer.playerName, profileID);
-                                        break;
-                                    }
-                                }
-                                break;
-
-                            default:
-                                break;
-                        }
-                        if (read == "back")
-                        {
-                            read = "lul";
-                            Console.WriteLine("Create or select profile");
-                            break;
-                        }
-                        if (activePlayer.isAlive == false)
-                        {
-                            Console.WriteLine("Create or select profile");
-                            break;
-                        }
-                    }
                 }
                 if (read == "exit")
                 {
